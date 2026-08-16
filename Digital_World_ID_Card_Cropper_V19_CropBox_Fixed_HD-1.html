@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Digital World ID Card Cropper — PDF Aadhaar/PAN + A4</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#eef5fb;color:#18324d}
+header{background:#1267d8;color:#fff;padding:15px 16px;font-weight:700;position:sticky;top:0;z-index:10}header .sub{font-size:12px;font-weight:400;margin-top:4px}
+main{max-width:900px;margin:auto;padding:14px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 14px #0002}
+h2{margin:0 0 12px;font-size:20px}.note{background:#fff8dd;border:1px solid #f0d66b;border-radius:12px;padding:11px;font-size:14px;margin-bottom:12px}
+label{font-weight:700;display:block;margin:8px 0 6px}input,select,button{width:100%;font:inherit;border-radius:12px;padding:12px;border:1px solid #cbd7e5;background:#fff}button{border:0;background:#1267d8;color:#fff;font-weight:700}.green{background:#159447}.gray{background:#edf3f8;color:#21425f}.danger{background:#c62828}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.tabs button.active{background:#159447}.status{font-weight:700;margin-top:10px}.ok{color:#087c35}.err{color:#c62828}
+.viewer{background:#dfe8f1;border-radius:16px;padding:10px;overflow:auto;text-align:center;min-height:180px}.cropArea{position:relative;display:inline-block;line-height:0;touch-action:none}.cropCanvas{max-width:100%;height:auto;background:#fff;display:block}.cropBox{position:absolute;border:4px solid #1683ff;background:#1683ff18;cursor:move;touch-action:none;box-shadow:0 0 0 9999px #0002;z-index:20;min-width:80px;min-height:50px}.cropBox:after{content:'✂️ CROP — उंगली से खींचें';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#1683ff;color:#fff;font-size:14px;font-weight:700;padding:7px 10px;border-radius:8px;white-space:nowrap;pointer-events:none}.tag{position:absolute;left:0;top:-30px;background:#1683ff;color:#fff;padding:6px 9px;border-radius:7px 7px 0 0;font-size:12px;font-weight:700;line-height:1}.handle{position:absolute;width:24px;height:24px;border-radius:50%;background:#fff;border:4px solid #1683ff;z-index:5}.tl{left:-13px;top:-13px}.tr{right:-13px;top:-13px}.bl{left:-13px;bottom:-13px}.br{right:-13px;bottom:-13px}
+.empty{padding:45px 10px;color:#61778d;font-weight:700}.preview{display:grid;grid-template-columns:1fr 1fr;gap:12px}.previewBox{border:1px solid #ccd8e4;border-radius:12px;padding:8px;text-align:center;background:#f8fbfe}.previewBox img{max-width:100%;width:100%;aspect-ratio:85.6/54;object-fit:fill;background:#fff;image-rendering:auto}.small{font-size:12px;color:#60788f;margin-top:5px}
+.a4{width:210mm;min-height:297mm;background:#fff;margin:10px auto;padding:12mm;box-shadow:0 2px 10px #0002}.a4title{text-align:center;font-size:11px;color:#555}.cards{display:flex;gap:7mm;margin-top:10mm}.idcard{width:85.6mm;height:54mm;border:1px solid #111;overflow:hidden;background:#fff}.idcard img{width:100%;height:100%;object-fit:fill;display:block}.printWrap{overflow:auto;background:#dfe8f1;border-radius:16px;padding:10px}
+@media(max-width:650px){.row,.preview{grid-template-columns:1fr}.a4{transform-origin:top left;transform:scale(.48);margin-bottom:-150mm;margin-left:0}.cards{gap:7mm}}
+@page{size:A4;margin:0}@media print{html,body{background:#fff!important;margin:0!important;padding:0!important}.noPrint,header,#printCard h2,#printCard>.note,#printCard>.row,#printCard>.a4title{display:none!important}#printCard{display:block!important;margin:0!important;padding:0!important;box-shadow:none!important;border-radius:0!important;width:210mm!important}.a4{display:block!important;box-shadow:none!important;margin:0!important;width:210mm!important;height:297mm!important;min-height:297mm!important;padding:12mm!important;transform:none!important;overflow:hidden!important}.cards{margin-top:10mm!important}}
+</style>
+</head>
+<body>
+<header>✂️ Digital World ID Card Cropper<div class="sub">PDF Aadhaar / PAN + Photo • Front + Back • Exact 85.6 × 54 mm • A4 Print</div></header>
+<main>
+<section class="card noPrint">
+<h2>1️⃣ Source चुनें</h2>
+<div class="tabs"><button id="pdfTab" class="active">📄 Aadhaar / PAN PDF</button><button id="photoTab" class="gray">🖼️ ID Card Photo</button></div>
+<div id="pdfPanel">
+<label>Card Type</label><select id="type"><option>Aadhaar Card</option><option>PAN Card</option><option>Voter Card</option><option>Ayushman Card</option><option>E-Shram Card</option><option>ABHA Card</option></select>
+<label>PDF चुनें</label><input id="pdfFile" type="file" accept="application/pdf,.pdf">
+<label>PDF Password <span style="font-weight:400">(अगर password लगा है)</span></label><input id="password" type="password" autocomplete="off" placeholder="उदा. RAHU1995">
+<div class="row" style="margin-top:10px"><button id="openPdf">🔓 Open PDF</button><button id="showPw" class="gray">👁️ Show</button></div>
+<div class="note" style="margin-top:10px">Aadhaar e-Aadhaar PDF में सामान्यतः नाम के पहले 4 CAPITAL अक्षर + जन्म वर्ष password होता है। Password bypass नहीं किया जाता।</div>
+</div>
+<div id="photoPanel" style="display:none">
+<div class="row"><div><label>Front Card Photo</label><input id="frontFile" type="file" accept="image/*"></div><div><label>Back Card Photo</label><input id="backFile" type="file" accept="image/*"></div></div>
+</div>
+<div id="status" class="status">PDF चुनें और Open PDF दबाएँ।</div>
+</section>
+
+<section class="card noPrint">
+<h2>2️⃣ Crop करें</h2>
+<div class="note">नीले box को उंगली से drag करें। चारों गोल handles से crop का size बदलें। Front और Back दोनों को अलग-अलग सेट कर सकते हैं।</div><div class="note" style="background:#e9fff0;border-color:#8bd5a5">✨ <b>HD Quality:</b> PDF को high-resolution में render किया जाता है और crop में original pixels preserve किए जाते हैं।</div>
+<div class="tabs"><button id="frontTab" class="active">🪪 Front Crop</button><button id="backTab" class="gray">🔄 Back Crop</button></div>
+<div class="note" style="background:#e8f1ff;border-color:#6fa8ff"><b>✂️ Crop कैसे करें:</b> नीला बॉक्स दिखेगा। बॉक्स के बीच से उंगली लगाकर move करें। चारों नीले गोल handles से size बदलें। <b>Reset Crop</b> दबाने पर बॉक्स फिर दिखाई देगा।</div><div class="viewer"><div class="empty" id="empty">पहले PDF खोलें या Photo चुनें — फिर यहाँ crop box दिखाई देगा।</div><div class="cropArea" id="cropArea" style="display:none"><canvas id="cropCanvas" class="cropCanvas"></canvas><div id="cropBox" class="cropBox"><span class="tag">CROP AREA</span><i class="handle tl"></i><i class="handle tr"></i><i class="handle bl"></i><i class="handle br"></i></div></div></div>
+<div class="row" style="margin-top:12px"><button id="resetBtn" class="gray">↩ Reset Crop</button><button id="useBtn" class="green">✅ Use This Crop</button></div>
+</section>
+
+<section class="card noPrint">
+<h2>3️⃣ Cropped ID Preview</h2>
+<div class="preview"><div class="previewBox"><b>FRONT</b><img id="frontPreview"><div class="small">85.6 × 54 mm</div></div><div class="previewBox"><b>BACK</b><img id="backPreview"><div class="small">85.6 × 54 mm</div></div></div>
+<div class="row" style="margin-top:12px"><button id="downloadFront" class="gray">⬇️ Save Front</button><button id="downloadBack" class="gray">⬇️ Save Back</button></div>
+</section>
+
+<section class="card" id="printCard">
+<h2>4️⃣ A4 Preview — Front + Back</h2>
+<div class="printWrap"><div class="a4" id="a4"><div class="a4title">Digital World ID Card Print — <b id="previewType">Aadhaar Card</b></div><div class="cards"><div class="idcard"><img id="a4Front"></div><div class="idcard"><img id="a4Back"></div></div></div></div>
+<div class="row" style="margin-top:12px"><button id="printBtn" class="green">🖨️ Print / Save PDF</button><button id="clearBtn" class="gray">🗑️ Clear All</button></div>
+<div class="note" style="margin-top:10px">A4 paper पर Front और Back side-by-side रहेंगे। हर card का exact size <b>85.6 × 54 mm</b> है। Print में <b>Actual Size / 100%</b> चुनें; Fit to page बंद रखें।</div>
+</section>
+</main>
+<script>
+const R=85.6/54;let current='front',sourceMode='pdf',pdfDoc=null;const sources={front:null,back:null};const boxes={front:null,back:null};let drag=null;
+const area=document.getElementById('cropArea'),canvas=document.getElementById('cropCanvas'),boxEl=document.getElementById('cropBox'),empty=document.getElementById('empty'),statusEl=document.getElementById('status');
+if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+function status(t,ok=false){statusEl.textContent=t;statusEl.className='status '+(ok?'ok':'err')}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function render(){const b=boxes[current];if(!b)return;const r=canvas.getBoundingClientRect();const sx=r.width/canvas.width, sy=r.height/canvas.height;boxEl.style.left=(b.x*sx)+'px';boxEl.style.top=(b.y*sy)+'px';boxEl.style.width=(b.w*sx)+'px';boxEl.style.height=(b.h*sy)+'px'}
+function resetBox(){const w=canvas.width*.78;const h=Math.min(canvas.height*.78,w/R);const ww=h*R;boxes[current]={x:(canvas.width-ww)/2,y:(canvas.height-h)/2,w:ww,h};render()}
+function showSource(which){current=which;const s=sources[which];if(!s){area.style.display='none';empty.style.display='block';empty.textContent='पहले '+(which==='front'?'Front':'Back')+' source तैयार करें।';return}empty.style.display='none';canvas.width=s.naturalWidth;canvas.height=s.naturalHeight;canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);canvas.getContext('2d').drawImage(s,0,0);area.style.display='inline-block';requestAnimationFrame(()=>{resetBox();render()})}
+function loadImage(file,which){if(!file)return;const im=new Image();im.onload=()=>{sources[which]=im;showSource(which)};im.src=URL.createObjectURL(file)}
+function pdfToImage(page){const vp=page.getViewport({scale:4});const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);return page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise.then(()=>new Promise(r=>{const im=new Image();im.onload=()=>r(im);im.src=c.toDataURL('image/png')}))}
+async function openPdf(){const f=document.getElementById('pdfFile').files[0];if(!f)return status('पहले PDF चुनें।');if(!window.pdfjsLib)return status('PDF engine load नहीं हुआ। Internet ON करें।');const pw=document.getElementById('password').value.trim();try{status('🔐 PDF खोल रहा है…',true);const data=new Uint8Array(await f.arrayBuffer());const task=pdfjsLib.getDocument({data,password:pw,isEvalSupported:false,useWorkerFetch:false});task.onPassword=(updatePassword)=>updatePassword(pw);pdfDoc=await task.promise;const page=await pdfDoc.getPage(1);const im=await pdfToImage(page);sources.front=im;sources.back=im;document.getElementById('previewType').textContent=document.getElementById('type').value;showSource('front');status('✅ PDF खुल गया। अब Front और Back crop करें।',true)}catch(e){const n=String(e?.name||''),m=String(e?.message||'');if(n==='PasswordException'||/password|invalid_password/i.test(m))status('❌ Password गलत है।');else status('❌ PDF open नहीं हुआ: '+(m||n))}}
+function pos(e){const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*(canvas.width/r.width),y:(e.clientY-r.top)*(canvas.height/r.height)}}
+boxEl.addEventListener('pointerdown',e=>{e.preventDefault();if(!sources[current])return;const h=e.target.closest('.handle'),p=pos(e),b=boxes[current]||{x:0,y:0,w:0,h:0};drag={mode:h?h.className.replace('handle ',''):'move',sx:p.x,sy:p.y,o:{...b}};boxEl.setPointerCapture?.(e.pointerId)});
+boxEl.addEventListener('pointermove',e=>{if(!drag)return;const p=pos(e),o=drag.o,dx=p.x-drag.sx,dy=p.y-drag.sy,min=50;let x=o.x,y=o.y,w=o.w,h=o.h;if(drag.mode==='move'){x=clamp(o.x+dx,0,canvas.width-o.w);y=clamp(o.y+dy,0,canvas.height-o.h)}else{if(drag.mode.includes('r'))w=clamp(o.w+dx,min,canvas.width-o.x);if(drag.mode.includes('l')){w=clamp(o.w-dx,min,o.x+o.w);x=o.x+o.w-w}if(drag.mode.includes('b'))h=clamp(o.h+dy,min,canvas.height-o.y);if(drag.mode.includes('t')){h=clamp(o.h-dy,min,o.y+o.h);y=o.y+o.h-h}if(drag.mode.includes('l')||drag.mode.includes('r'))h=w/R;else if(drag.mode.includes('t')||drag.mode.includes('b'))w=h*R;if(x<0)x=0;if(y<0)y=0;if(x+w>canvas.width){w=canvas.width-x;h=w/R}if(y+h>canvas.height){h=canvas.height-y;w=h*R}}boxes[current]={x,y,w,h};render()});
+boxEl.addEventListener('pointerup',()=>drag=null);boxEl.addEventListener('pointercancel',()=>drag=null);
+window.addEventListener('resize',()=>{if(sources[current])render()});
+document.getElementById('frontFile').onchange=e=>loadImage(e.target.files[0],'front');document.getElementById('backFile').onchange=e=>loadImage(e.target.files[0],'back');
+document.getElementById('frontTab').onclick=()=>{document.getElementById('frontTab').classList.add('active');document.getElementById('backTab').classList.remove('active');showSource('front')};document.getElementById('backTab').onclick=()=>{document.getElementById('backTab').classList.add('active');document.getElementById('frontTab').classList.remove('active');showSource('back')};
+document.getElementById('pdfTab').onclick=()=>{sourceMode='pdf';document.getElementById('pdfTab').classList.add('active');document.getElementById('photoTab').classList.remove('active');document.getElementById('pdfPanel').style.display='block';document.getElementById('photoPanel').style.display='none';status('PDF चुनें और Open PDF दबाएँ।')};document.getElementById('photoTab').onclick=()=>{sourceMode='photo';document.getElementById('photoTab').classList.add('active');document.getElementById('pdfTab').classList.remove('active');document.getElementById('pdfPanel').style.display='none';document.getElementById('photoPanel').style.display='block';status('Front/Back photo चुनें।')};
+document.getElementById('openPdf').onclick=openPdf;document.getElementById('showPw').onclick=()=>{const p=document.getElementById('password');p.type=p.type==='password'?'text':'password';document.getElementById('showPw').textContent=p.type==='password'?'👁️ Show':'🙈 Hide'};document.getElementById('resetBtn').onclick=()=>{if(sources[current]){showSource(current);status('✂️ Crop box वापस आ गया। नीले बॉक्स को उंगली से drag करें और चारों corners से size बदलें।',true)}};
+function cropData(){const b=boxes[current],out=document.createElement('canvas');const targetW=Math.min(1800,Math.max(900,Math.round(b.w)));const targetH=Math.round(targetW/R);out.width=targetW;out.height=targetH;const ctx=out.getContext('2d');ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(canvas,b.x,b.y,b.w,b.h,0,0,out.width,out.height);return out.toDataURL('image/png')}
+document.getElementById('useBtn').onclick=()=>{if(!sources[current])return status('पहले '+(current==='front'?'Front':'Back')+' source तैयार करें।');const data=cropData();document.getElementById(current+'Preview').src=data;document.getElementById(current==='front'?'a4Front':'a4Back').src=data;status('✅ '+(current==='front'?'Front':'Back')+' crop तैयार है।',true)};
+function save(which){const src=document.getElementById(which+'Preview').src;if(!src)return alert('पहले crop करके Use This Crop दबाएँ।');const a=document.createElement('a');a.href=src;a.download=which+'-id-card-crop.png';a.click()}document.getElementById('downloadFront').onclick=()=>save('front');document.getElementById('downloadBack').onclick=()=>save('back');
+document.getElementById('printBtn').onclick=()=>{const f=document.getElementById('a4Front').src,b=document.getElementById('a4Back').src;if(!f&&!b)return status('पहले Front/Back crop करें।');window.print()};
+document.getElementById('clearBtn').onclick=()=>location.reload();
+</script></body></html>
